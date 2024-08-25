@@ -1,9 +1,10 @@
 """"------------------------------------------------------------------
 PDF Interweaver
-(c) Jeff Kessler, 2019-06-15-1710
+(c) Jeff Kessler, 2024-08-25-1805
 
 2023-08-13-0855-JK  Fix for unequal page numbers
                     Distinct filenames
+2024-08-25-1805-JK  Updates for PyPDF2 v3
 ------------------------------------------------------------------"""
 
 import PyPDF2
@@ -14,66 +15,66 @@ import time
 def pdf_merger(original_fp, new_fp, watermark, mark1, mark2):
 
     # Open PDF Files
-    a = PyPDF2.PdfFileReader(original_fp)
-    b = PyPDF2.PdfFileReader(new_fp)
+    a = PyPDF2.PdfReader(original_fp)
+    b = PyPDF2.PdfReader(new_fp)
 
 
     # Open Watermark files
     if watermark:
-        watermark_pdf = PyPDF2.PdfFileReader(watermark)
-        watermark = watermark_pdf.getPage(0)
+        watermark_pdf = PyPDF2.PdfReader(watermark)
+        watermark = watermark_pdf.pages[0]
 
     if mark1:
-        mark1_pdf = PyPDF2.PdfFileReader(mark1)
-        mark1 = mark1_pdf.getPage(0)
+        mark1_pdf = PyPDF2.PdfReader(mark1)
+        mark1 = mark1_pdf.pages[0]
 
     if mark2:
-        mark2_pdf = PyPDF2.PdfFileReader(mark2)
-        mark2 = mark2_pdf.getPage(0)
+        mark2_pdf = PyPDF2.PdfReader(mark2)
+        mark2 = mark2_pdf.pages[0]
 
 
     # Determine common page count
-    common_page_count = min(a.numPages, b.numPages)
+    common_page_count = min(len(a.pages), len(b.pages))
 
 
     # Establish merged PDF
-    merged = PyPDF2.PdfFileWriter()
+    merged = PyPDF2.PdfWriter()
 
 
     # Iteratively add common pages
     for pagenum in range(common_page_count):
-        pagea = a.getPage(pagenum)
-        pageb = b.getPage(pagenum)
+        pagea = a.pages[pagenum]
+        pageb = b.pages[pagenum]
         if mark1:
-            pagea.mergePage(mark1)
+            pagea.merge_page(mark1)
         if mark2:
-            pageb.mergePage(mark2)
+            pageb.merge_page(mark2)
         if watermark:
-            pagea.mergePage(watermark)
-            pageb.mergePage(watermark)
-        merged.addPage(pagea)
-        merged.addPage(pageb)
+            pagea.merge_page(watermark)
+            pageb.merge_page(watermark)
+        merged.add_page(pagea)
+        merged.add_page(pageb)
 
     # Add Unique Pages
-    for pagenum in range(common_page_count, a.numPages):
-        pagea = a.getPage(pagenum)
+    for pagenum in range(common_page_count, len(a.pages)):
+        pagea = a.pages[pagenum]
         if mark1:
-            pagea.mergePage(mark1)
+            pagea.merge_page(mark1)
         if watermark:
-            pagea.mergePage(watermark)
-            pageb.mergePage(watermark)
-        merged.addPage(pagea)
-        merged.addBlankPage()
+            pagea.merge_page(watermark)
+            pageb.merge_page(watermark)
+        merged.add_page(pagea)
+        merged.add_blank_page()
 
-    for pagenum in range(common_page_count, b.numPages):
-        pageb = b.getPage(pagenum)
+    for pagenum in range(common_page_count, len(b.pages)):
+        pageb = b.pages[pagenum]
         if mark2:
-            pageb.mergePage(mark2)
+            pageb.merge_page(mark2)
         if watermark:
-            pagea.mergePage(watermark)
-            pageb.mergePage(watermark)
-        merged.addBlankPage()
-        merged.addPage(pageb)
+            pagea.merge_page(watermark)
+            pageb.merge_page(watermark)
+        merged.add_blank_page()
+        merged.add_page(pageb)
 
 
     # Save Merged PDF
